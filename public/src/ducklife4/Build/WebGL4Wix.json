@@ -1,0 +1,13 @@
+{
+  "companyName": "Wix Games",
+  "productName": "Duck Life",
+  "dataUrl": "WebGL4Wix.data.unityweb",
+  "asmCodeUrl": "WebGL4Wix.asm.code.unityweb",
+  "asmMemoryUrl": "WebGL4Wix.asm.memory.unityweb",
+  "asmFrameworkUrl": "WebGL4Wix.asm.framework.unityweb",
+  "TOTAL_MEMORY": 268435456,
+  "graphicsAPI": ["WebGL 2.0", "WebGL 1.0"],
+  "webglContextAttributes": {"preserveDrawingBuffer": false},
+  "splashScreenStyle": "Dark",
+  "backgroundColor": "#000000"
+}

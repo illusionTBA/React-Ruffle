@@ -1,0 +1,315 @@
+<html>
+
+<head>
+    <style>
+        body {
+            overflow: hidden;
+            margin: 0;
+        }
+
+        #listener {
+            text-align: center;
+            top: 40%;
+            position: relative;
+        }
+    </style>
+    <script>
+        /*
+         * Copyright (c) 2011 The Native Client Authors. All rights reserved.
+         * Use of this source code is governed by a BSD-style license that can be
+         * found in the LICENSE file.
+         */
+
+        /**
+         * @fileoverview This file provides a BrowserChecker Javascript class.
+         * Users can create a BrowserChecker object, invoke checkBrowser(|version|),
+         * and then use getIsValidBrowser() and getBrowserSupportStatus()
+         * to determine if the browser version is greater than |version|
+         * and if the Native Client plugin is found.
+         */
+
+        // Create a namespace object
+        var browser_version = browser_version || {};
+
+        /**
+         * Class to provide checking for version and NativeClient.
+         * @param {integer} arg1 An argument that indicates major version of Chrome we
+         *     require, such as 14.
+         */
+
+        /**
+         * Constructor for the BrowserChecker.  Sets the major version of
+         * Chrome that is required to |minChromeVersion|.
+         * @param minChromeVersion   The earliest major version of chrome that
+         *     is supported.  If the Chrome browser version is less than
+         *     |minChromeVersion| then |isValidBrowswer| will be set to false.
+         * @param opt_maxChromeVersion   Ignored.  Retained for backwards compatibility.
+         * @param appVersion  The application version string.
+         * @param plugins     The plugins that exist in the browser.
+         * @constructor
+         */
+        browser_version.BrowserChecker = function(minChromeVersion,
+            appVersion, plugins,
+            opt_maxChromeVersion) {
+            /**
+             * Version specified by the user. This class looks to see if the browser
+             * version is >= |minChromeVersion_|.
+             * @type {integer}
+             * @private
+             */
+            this.minChromeVersion_ = minChromeVersion;
+
+            /**
+             * List of Browser plugin objects.
+             * @type {Ojbect array}
+             * @private
+             */
+            this.plugins_ = plugins;
+
+            /**
+             * Application version string from the Browser.
+             * @type {integer}
+             * @private
+             */
+            this.appVersion_ = appVersion;
+
+            /**
+             * Flag used to indicate if the browser has Native Client and is if the
+             * browser version is recent enough.
+             * @type {boolean}
+             * @private
+             */
+            this.isValidBrowser_ = false;
+
+            /**
+             * Actual major version of Chrome -- found by querying the browser.
+             * @type {integer}
+             * @private
+             */
+            this.chromeVersion_ = null;
+
+            /**
+             * Browser support status. This allows the user to get a detailed status
+             * rather than using this.browserSupportMessage.
+             */
+            this.browserSupportStatus_ =
+                browser_version.BrowserChecker.StatusValues.UNKNOWN;
+        }
+
+        /**
+         * The values used for BrowserChecker status to indicate success or
+         * a specific error.
+         * @enum {id}
+         */
+        browser_version.BrowserChecker.StatusValues = {
+            UNKNOWN: 0,
+            NACL_ENABLED: 1,
+            UNKNOWN_BROWSER: 2,
+            CHROME_VERSION_TOO_OLD: 3,
+            NACL_NOT_ENABLED: 4,
+            NOT_USING_SERVER: 5
+        };
+
+        /**
+         * Determines if the plugin with name |name| exists in the browser.
+         * @param {string} name The name of the plugin.
+         * @param {Object array} plugins The plugins in this browser.
+         * @return {bool} |true| if the plugin is found.
+         */
+        browser_version.BrowserChecker.prototype.pluginExists = function(name,
+            plugins) {
+            for (var index = 0; index < plugins.length; index++) {
+                var plugin = this.plugins_[index];
+                var plugin_name = plugin['name'];
+                // If the plugin is not found, you can use the Javascript console
+                // to see the names of the plugins that were found when debugging.
+                if (plugin_name.indexOf(name) != -1) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Returns browserSupportStatus_ which indicates if the browser supports
+         * Native Client.  Values are defined as literals in
+         * browser_version.BrowserChecker.StatusValues.
+         * @ return {int} Level of NaCl support.
+         */
+        browser_version.BrowserChecker.prototype.getBrowserSupportStatus = function() {
+            return this.browserSupportStatus_;
+        }
+
+        /**
+         * Returns isValidBrowser (true/false) to indicate if the browser supports
+         * Native Client.
+         * @ return {bool} If this browser has NativeClient and correct version.
+         */
+        browser_version.BrowserChecker.prototype.getIsValidBrowser = function() {
+            return this.isValidBrowser_;
+        }
+
+        /**
+         * Checks to see if this browser can support Native Client applications.
+         * For Chrome browsers, checks to see if the "Native Client" plugin is
+         * enabled.
+         */
+        browser_version.BrowserChecker.prototype.checkBrowser = function() {
+            var versionPatt = /Chrome\/(\d+)\.(\d+)\.(\d+)\.(\d+)/;
+            var result = this.appVersion_.match(versionPatt);
+
+            // |result| stores the Chrome version number.
+            if (!result) {
+                this.isValidBrowser_ = false;
+                this.browserSupportStatus_ =
+                    browser_version.BrowserChecker.StatusValues.UNKNOWN_BROWSER;
+            }
+            else {
+                this.chromeVersion_ = result[1];
+                // We know we have Chrome, check version and/or plugin named Native Client
+                if (this.chromeVersion_ >= this.minChromeVersion_) {
+                    var found_nacl = this.pluginExists('Native Client', this.plugins_);
+                    if (found_nacl) {
+                        this.isValidBrowser_ = true;
+                        this.browserSupportStatus_ =
+                            browser_version.BrowserChecker.StatusValues.NACL_ENABLED;
+                    }
+                    else {
+                        this.isValidBrowser_ = false;
+                        this.browserSupportStatus_ =
+                            browser_version.BrowserChecker.StatusValues.NACL_NOT_ENABLED;
+                    }
+                }
+                else {
+                    // We are in a version that is less than |minChromeVersion_|
+                    this.isValidBrowser_ = false;
+                    this.browserSupportStatus_ =
+                        browser_version.BrowserChecker.StatusValues.CHROME_VERSION_TOO_OLD;
+                }
+            }
+            var my_protocol = window.location.protocol;
+            if (my_protocol.indexOf('file') == 0) {
+                this.isValidBrowser_ = false;
+                this.browserSupportStatus_ =
+                    browser_version.BrowserChecker.StatusValues.NOT_USING_SERVER;
+            }
+        }
+        var isValidBrowser = false;
+        var browserSupportStatus = 0;
+        var checker = new browser_version.BrowserChecker(
+            15, // Minumum Chrome version.
+            window.navigator["appVersion"],
+            window.navigator["plugins"]);
+        checker.checkBrowser();
+        isValidBrowser = checker.getIsValidBrowser();
+        browserSupportStatus = checker.getBrowserSupportStatus();
+    </script>
+</head>
+
+<body>
+    <div id="listener">
+        <h1 id="progress">Make sure you gone to chrome://flags/#enable-nacl and enabled native client</h1>
+        <script>
+            var howFastProgress = 10;
+            var timeout = false;
+
+            function setError(error) {
+                document.getElementById('progress').style.color = 'red';
+                document.getElementById('progress').innerHTML = error;
+            };
+
+            function setProgress(message, percent) {
+                if (!timeout) {
+                    timeout = true;
+                    setTimeout(function() { timeout = false }, howFastProgress);
+                    document.getElementById('progress').innerHTML = message + percent.toFixed(0) + '%';
+                }
+            }
+
+            function onloaded() {
+                listener.style.top = '0px';
+                document.getElementById('progress').setAttribute('hidden', 'true');
+            }
+
+            function checkIfArrayExists(checkArray, valueToCheck) {
+                for (var count = 0; count < checkArray.length; count++) {
+                    if (checkArray[count] == valueToCheck) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            switch (browserSupportStatus) {
+                case browser_version.BrowserChecker.StatusValues.NACL_ENABLED:
+                    break;
+                case browser_version.BrowserChecker.StatusValues.UNKNOWN_BROWSER:
+                    setError('Unknown Browser');
+                    break;
+                case browser_version.BrowserChecker.StatusValues.CHROME_VERSION_TOO_OLD:
+                    setError('Chrome too old: You must use Chrome version 15 or later.');
+                    break;
+                case browser_version.BrowserChecker.StatusValues.NACL_NOT_ENABLED:
+                    setError('NaCl disabled: Native Client is not enabled.<br>' +
+                        'Please go to <b>chrome://plugins</b> and enable Native Client ' +
+                        'plugin.');
+                    break;
+                case browser_version.BrowserChecker.StatusValues.NOT_USING_SERVER:
+                    setError('file: URL detected, please use a web server to host Native ' +
+                        'Client applications.');
+                    break;
+                default:
+                    setError('Unknown error: Unable to detect browser and/or ' +
+                        'Native Client support.');
+                    break;
+            }
+
+            var downloadArray = [];
+            var assetCounter = 0;
+
+            function downloadProgress(e) {
+                if (!checkIfArrayExists(downloadArray, e.url)) {
+                    if (e.url) {
+                        downloadArray.push(e.url);
+                        assetCounter++;
+                    }
+                }
+                else {
+                    if (e.url) {
+                        var percent = (e.loaded / e.total) * 100;
+                        setProgress('Loading ' + assetCounter + ' out of 13 assets: ', percent);
+                    }
+                }
+            }
+
+            function unityProgress(e) {
+                if ((e.data).includes("Unity.FinishedLoading")) {
+                    onloaded();
+                    return;
+                }
+                else if (e.data.includes('Unity.SetProgress')) {
+                    var progress = e.data.split('Unity.SetProgress')[1].slice(1, -1);
+                    setProgress('Loading Unity: ', (progress * 100));
+                }
+                else if (e.data.indexOf("Unity.SetError(") == 0) {
+                    var error = e.data.substring(16);
+                    error = error.substring(0, error.length - 2);
+                    setError(error);
+                }
+                else {
+                    eval(e.data);
+                }
+            }
+
+            var listener = document.getElementById('listener');
+            listener.addEventListener('progress', downloadProgress, true);
+            listener.addEventListener('error', function(e) { console.error(e) }), true;
+            listener.addEventListener('load', function(e) { /*console.log(e)*/ }, true);
+            listener.addEventListener('loadend', function(e) { /*console.log(e)*/ }, true);
+            listener.addEventListener('message', unityProgress, true);
+        </script>
+        <embed id='UnityEmbed' width="100%" height="100%" src="unity_nacl_files_3.x.x/unity.nmf" data="MK_NaCl.unity3d" type="application/x-nacl">
+    </div>
+</body>
+
+</html>

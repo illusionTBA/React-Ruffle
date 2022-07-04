@@ -1,0 +1,24 @@
+{
+"update_url":"http://clients2.google.com/service/update2/crx",
+  "name": "Muffin Knight",
+  "description": "Muffin Knight",
+  "version": "1.4.5",
+  "icons": {
+  },
+  "requirements": {
+    "3D": {
+      "features": ["css3d", "webgl"]
+    }
+  },
+  "icons": {
+	  "16": "icon16.png",
+	  "48": "icon48.png",
+	  "128": "icon128.png"
+  },
+  "app": {
+    "launch": {
+      "local_path": "MK_NaCl_nacl.html"
+    }
+  },
+"permissions": ["http://www.angrymobgames.com/*" ]
+}
