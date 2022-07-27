@@ -28,7 +28,7 @@ function Home() {
         <a href="/games" className="inline-flex items-center justify-center drop-shadow-xl h-14 px-10 py-2 mt-2 text-xl font-semibold text-center text-gray-200 no-underline align-middle transition-all duration-300 ease-in-out bg-transparent border-2 border-gray-600 border-solid rounded-full cursor-pointer select-none hover:text-white hover:border-white focus:shadow-xs focus:no-underline">
           Start Browsing
         </a>
-      </motion.div>
+      </motion.div> 
       <div className='flex bottom-0 items-center'>
         <div className='rounded-md bg-[#1f2635] p-1 space-x-2'>
           <TbBrandGithub className='flex text-gray-300 text-3xl hover:cursor-pointer hover:text-gray-500 transition-all duration-300 ease-in-out'
