@@ -5,3 +5,13 @@
 body {
   @apply bg-[#1a202c]
 }
+
+html,
+body {
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+body {
+  position: relative;
+}
